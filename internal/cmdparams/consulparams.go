@@ -1,6 +1,7 @@
 package cmdparams
 
 import (
+	"path/filepath"
 	"runtime"
 
 	"github.com/pnocera/novaco/internal/utils"
@@ -19,12 +20,10 @@ type ConsulConfigParams struct {
 	AddressesHttp  string
 }
 
-func GetConsulProgramParams(assets string) (*ProgramParams, error) {
-
-	consuldir := utils.Join(assets, "consul")
-
-	configtemplate := utils.Join(consuldir, "templates/consul.server.hcl")
-	configoutput := utils.Join(consuldir, "config/consul.server.hcl")
+// GetConsulProgramParams returns the program params for consul
+// assets: the path to the assets directory
+// runtype is the type of run (primary, server or client)
+func GetConsulProgramParams(assets string, runtype string) (*ProgramParams, error) {
 
 	ip, err := utils.GetOutboundIP()
 	if err != nil {
@@ -33,7 +32,7 @@ func GetConsulProgramParams(assets string) (*ProgramParams, error) {
 
 	consulconfigparams := ConsulConfigParams{
 		LogLevel:       "DEBUG",
-		DataDir:        utils.Join(consuldir, "data"),
+		DataDir:        utils.Join(assets, "data/consul"),
 		DataCenter:     "dc1",
 		ClientAddr:     ip.String(),
 		UiEnabled:      true,
@@ -44,20 +43,24 @@ func GetConsulProgramParams(assets string) (*ProgramParams, error) {
 		AddressesHttp:  ip.String() + " 127.0.0.1",
 	}
 
+	configtemplate := utils.Join(assets, "templates/consul."+runtype+".hcl")
+	configoutput := utils.Join(assets, "config/consul/auto/consul."+runtype+".hcl")
 	err = utils.Render(configtemplate, configoutput, consulconfigparams)
 
 	if err != nil {
 		return nil, err
 	}
 
-	exefile := utils.Join(consuldir, "consul_"+runtime.GOARCH+".exe")
+	exefile := utils.Join(assets, "bin/consul/consul_"+runtime.GOARCH+".exe")
 
 	return &ProgramParams{
-		DirPath:     consuldir,
+		DirPath:     filepath.Dir(exefile),
 		ExeFullname: exefile,
 		AdditionalParams: []string{
 			"agent",
 			"-config-file=" + configoutput,
+			"-config-file=" + utils.Join(assets, "config/consul/custom"),
 		},
+		LogFile: utils.Join(assets, "logs/consul/consul."+runtype+".log"),
 	}, nil
 }

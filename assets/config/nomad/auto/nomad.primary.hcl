@@ -1,6 +1,6 @@
 log_level = "DEBUG"
 
-data_dir = "e:/Projects/nomad/server_install/assets/nomad/data"
+data_dir = "e:/Projects/nomad/server_install/assets/data/nomad"
 
 server {
     enabled = true

@@ -11,13 +11,45 @@ func Join(elem ...string) string {
 	return filepath.ToSlash(filepath.Join(elem...))
 }
 
-func CurPath(dir string) string {
+func Assets() (string, error) {
 	ex, err := os.Executable()
 	if err != nil {
-		return dir
+		return "", err
 	}
-	return Join(filepath.Dir(ex), dir)
+
+	assets := Join(ex, "assets")
+	_, err = os.Stat(assets)
+
+	if os.IsNotExist(err) {
+		//try to get it from the parent folder
+		assets = Join(filepath.Dir(ex), "assets")
+	}
+	_, err = os.Stat(assets)
+	if os.IsNotExist(err) {
+		//try to get it from the parent folder
+		assets = Join(filepath.Dir(filepath.Dir(ex)), "assets")
+	}
+
+	_, err = os.Stat(assets)
+	if os.IsNotExist(err) {
+		//try to get it from the parent folder
+		assets = Join(filepath.Dir(filepath.Dir(filepath.Dir(ex))), "assets")
+	}
+	_, err = os.Stat(assets)
+	if os.IsNotExist(err) {
+		return "", err
+	}
+	return assets, nil
+
 }
+
+// func curPath(dir string) (string, error) {
+// 	ex, err := os.Executable()
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	return Join(filepath.Dir(ex), dir), nil
+// }
 
 func GetOutboundIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")

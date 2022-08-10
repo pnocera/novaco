@@ -1,6 +1,7 @@
 package cmdparams
 
 import (
+	"path/filepath"
 	"runtime"
 
 	"github.com/pnocera/novaco/internal/utils"
@@ -17,38 +18,48 @@ type VaultConfigParams struct {
 	UiEnabled                bool
 }
 
-func GetVaultProgramParams(assets string) (*ProgramParams, error) {
+func GetVaultProgramParams(assets string, runtype string) (*ProgramParams, error) {
 
-	vaultdir := utils.Join(assets, "vault")
+	// vaultdir := utils.Join(assets, "vault")
 
-	configtemplate := utils.Join(vaultdir, "templates/vault.server.hcl")
-	configoutput := utils.Join(vaultdir, "config/vault.server.hcl")
+	// configtemplate := utils.Join(vaultdir, "templates/vault.server.hcl")
+	// configoutput := utils.Join(vaultdir, "config/vault.server.hcl")
+
+	ip, err := utils.GetOutboundIP()
+	if err != nil {
+		return nil, err
+	}
 
 	vaultconfigparams := VaultConfigParams{
 		LogLevel:                 "DEBUG",
-		StorageConsulAddress:     "127.0.0.1:8500",
+		StorageConsulAddress:     ip.String() + ":8500",
 		StorageConsulPath:        "vault/",
-		TcpAddress:               "127.0.0.1:8200",
+		TcpAddress:               ip.String() + ":8200",
 		TcpTlsDisable:            1,
-		TelemetryStatsdAddress:   "127.0.0.1:8125",
+		TelemetryStatsdAddress:   ip.String() + ":8125",
 		TelemetryDisableHostname: true,
 		UiEnabled:                true,
 	}
 
-	err := utils.Render(configtemplate, configoutput, vaultconfigparams)
+	configtemplate := utils.Join(assets, "templates/vault."+runtype+".hcl")
+	configoutput := utils.Join(assets, "config/vault/auto/vault."+runtype+".hcl")
+
+	err = utils.Render(configtemplate, configoutput, vaultconfigparams)
 
 	if err != nil {
 		return nil, err
 	}
 
-	exefile := utils.Join(vaultdir, "vault_"+runtime.GOARCH+".exe")
+	exefile := utils.Join(assets, "bin/vault/vault_"+runtime.GOARCH+".exe")
 
 	return &ProgramParams{
-		DirPath:     vaultdir,
+		DirPath:     filepath.Dir(exefile),
 		ExeFullname: exefile,
 		AdditionalParams: []string{
 			"server",
 			"-config=" + configoutput,
+			"-config=" + utils.Join(assets, "config/vault/custom"),
 		},
+		LogFile: utils.Join(assets, "logs/vault/vault."+runtype+".log"),
 	}, nil
 }

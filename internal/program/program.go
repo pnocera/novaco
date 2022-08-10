@@ -1,6 +1,7 @@
 package program
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"sync"
@@ -13,21 +14,58 @@ import (
 var (
 	writingSync sync.Mutex
 	processes   []*exec.Cmd
+	errs        chan error
 )
 
-type Program struct {
-	Service service.Service
+type program struct {
+	runtype string
 	Logger  service.Logger
 }
 
-func (p Program) Start(s service.Service) error {
-	p.Logger.Info(s.String() + " starting")
+func StartNew(runtype string) {
+	svcConfig := &service.Config{
+		Name:        "gci-nomad-" + runtype,
+		DisplayName: "GCI Nomad Server " + runtype,
+		Description: "A Hashicorp Nomad server",
+	}
 
-	go p.run()
-	return nil
+	prg := NewProgram(runtype)
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger, err := s.Logger(nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = s.Run()
+	logger.Info("Service stopped")
+	if err != nil {
+		logger.Error(err)
+	}
 }
 
-func (p Program) Stop(s service.Service) error {
+func NewProgram(runtype string) *program {
+
+	return &program{runtype: runtype}
+}
+
+func (p program) Start(s service.Service) error {
+	logger, err := s.Logger(nil)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	p.Logger = logger
+	p.Logger.Info(s.String() + " starting")
+	errs = make(chan error, 1)
+	go p.run()
+	return <-errs
+}
+
+func (p program) Stop(s service.Service) error {
 	p.Logger.Info(s.String() + " stopping")
 	writingSync.Lock()
 	for _, process := range processes {
@@ -44,39 +82,84 @@ func (p Program) Stop(s service.Service) error {
 	return nil
 }
 
-func (p Program) run() error {
+func (p program) run() {
 
 	p.Logger.Info("Starting")
 	var progparams []cmdparams.ProgramParams
 
-	assets := utils.CurPath("assets")
-
-	nomadparams, err := cmdparams.GetNomadProgramParams(assets)
+	assets, err := utils.Assets()
 	if err != nil {
 		p.Logger.Error(err)
-		return err
+		errs <- err
+		return
 	}
 
-	consulparams, err := cmdparams.GetConsulProgramParams(assets)
+	gitparams, err := cmdparams.GetGitParams(assets, p.runtype)
 	if err != nil {
 		p.Logger.Error(err)
-		return err
+		errs <- err
+		return
 	}
 
-	progparams = append(progparams, *consulparams, *nomadparams)
+	nomadparams, err := cmdparams.GetNomadProgramParams(assets, p.runtype)
+	if err != nil {
+		p.Logger.Error(err)
+		errs <- err
+		close(errs)
+		return
+	}
 
-	return p.ExecAndWait(progparams)
+	consulparams, err := cmdparams.GetConsulProgramParams(assets, p.runtype)
+	if err != nil {
+		p.Logger.Error(err)
+		errs <- err
+		close(errs)
+		return
+	}
+
+	vaultparams, err := cmdparams.GetVaultProgramParams(assets, p.runtype)
+	if err != nil {
+		p.Logger.Error(err)
+		errs <- err
+		close(errs)
+		return
+	}
+
+	progparams = append(progparams, *consulparams, *vaultparams, *nomadparams, *gitparams)
+	p.Logger.Info(consulparams.ExeFullname)
+	p.Logger.Info(vaultparams.ExeFullname)
+	p.Logger.Info(nomadparams.ExeFullname)
+	p.Logger.Info(gitparams.ExeFullname)
+
+	err = p.ExecAndWait(progparams)
+	if err != nil {
+		p.Logger.Error(err)
+		errs <- err
+
+	}
+
+	close(errs)
 
 }
 
-func (p Program) ExecAndWait(commands []cmdparams.ProgramParams) error {
+func (p program) ExecAndWait(commands []cmdparams.ProgramParams) error {
 	var wg sync.WaitGroup
+	var suberrs chan error = make(chan error, len(commands))
 
 	for _, param := range commands {
 		cmd := exec.Command(param.ExeFullname, param.AdditionalParams...)
 		cmd.Dir = param.DirPath
+
+		cmderr := os.Stderr
+		if param.LogFile != "" {
+			logfile, err := os.Create(param.LogFile)
+			if err == nil {
+				cmderr = logfile
+			}
+		}
+
 		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stderr = cmderr
 
 		writingSync.Lock()
 		processes = append(processes, cmd)
@@ -86,13 +169,19 @@ func (p Program) ExecAndWait(commands []cmdparams.ProgramParams) error {
 
 		go func() {
 			defer wg.Done()
-			err := cmd.Start()
-			if err != nil {
-				p.Logger.Error(err)
+			err0 := cmd.Start()
+			if err0 != nil {
+				p.Logger.Error(err0)
+				suberrs <- err0
 			}
 
 		}()
 	}
+
+	if <-suberrs != nil {
+		return <-suberrs
+	}
+
 	wg.Wait()
 
 	return nil
