@@ -67,6 +67,7 @@ require (
 
 require (
 	github.com/c4milo/handlers v0.1.0
+	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/consul v1.12.3
 	github.com/hashicorp/consul/api v1.13.1

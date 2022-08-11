@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -76,4 +77,10 @@ func Render(input string, output string, params interface{}) error {
 	tmpl.Execute(f, params)
 
 	return nil
+}
+
+func IsTemporaryFile(name string) bool {
+	return strings.HasSuffix(name, "~") || // vim
+		strings.HasPrefix(name, ".#") || // emacs
+		(strings.HasPrefix(name, "#") && strings.HasSuffix(name, "#")) // emacs
 }

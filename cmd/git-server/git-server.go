@@ -29,6 +29,9 @@ func main() {
 
 	cfg := config.NewConfig(configPath)
 
-	gitserver.GitServer(cfg)
+	err := gitserver.GitServer(cfg)
+	if err != nil {
+		panic(err)
+	}
 
 }

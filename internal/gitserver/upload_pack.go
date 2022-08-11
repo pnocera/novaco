@@ -49,12 +49,8 @@ func uploadPackHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadPackHandler2(w http.ResponseWriter, req *http.Request) {
 	userName, repoName, _ := GetParamValues(req)
-	if req.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method Not Allowed"))
-		return
-	}
-	service := "git-upload-pack"
+
+	service := "upload-pack"
 	process := cfg.UploadPackExePath()
 	cwd := utils.Join(cfg.ReposPath, userName, repoName)
 

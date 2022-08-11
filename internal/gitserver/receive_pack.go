@@ -50,12 +50,8 @@ func receivePackHandler(w http.ResponseWriter, r *http.Request) {
 
 func receivePackHandler2(w http.ResponseWriter, req *http.Request) {
 	userName, repoName, _ := GetParamValues(req)
-	if req.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		w.Write([]byte("Method Not Allowed"))
-		return
-	}
-	service := "git-receive-pack"
+
+	service := "receive-pack"
 
 	process := cfg.ReceivePackExePath()
 	cwd := utils.Join(cfg.ReposPath, userName, repoName)

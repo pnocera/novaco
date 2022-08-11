@@ -14,7 +14,7 @@ import (
 )
 
 // ParseConfigFile returns an agent.Config from parsed from a file.
-func ParseConfigFile(path string) (*Config, error) {
+func ParseGitConfigFile(path string) (*GitConfig, error) {
 	// slurp
 	var buf bytes.Buffer
 	path, err := filepath.Abs(path)
@@ -32,7 +32,7 @@ func ParseConfigFile(path string) (*Config, error) {
 	}
 
 	// parse
-	c := &Config{}
+	c := &GitConfig{}
 
 	err = hcl.Decode(c, buf.String())
 	if err != nil {
@@ -40,29 +40,29 @@ func ParseConfigFile(path string) (*Config, error) {
 	}
 
 	// Set client template config or its members to nil if not set.
-	finalizeTemplateConfig(c)
+	finalizeGitTemplateConfig(c)
 
 	return c, nil
 }
 
-func finalizeTemplateConfig(config *Config) {
+func finalizeGitTemplateConfig(config *GitConfig) {
 	// if config.GitBinPath.IsEmpty() {
 	// 	config.GitBinPath = nil
 	// }
 }
 
-func LoadConfig(path string) (*Config, error) {
+func LoadGitConfig(path string) (*GitConfig, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		return nil, err
 	}
 
 	if fi.IsDir() {
-		return LoadConfigDir(path)
+		return LoadGitConfigDir(path)
 	}
 
 	cleaned := filepath.Clean(path)
-	config, err := ParseConfigFile(cleaned)
+	config, err := ParseGitConfigFile(cleaned)
 	if err != nil {
 		return nil, fmt.Errorf("Error loading %s: %s", cleaned, err)
 	}
@@ -70,7 +70,7 @@ func LoadConfig(path string) (*Config, error) {
 	return config, nil
 }
 
-func LoadConfigDir(dir string) (*Config, error) {
+func LoadGitConfigDir(dir string) (*GitConfig, error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
@@ -120,14 +120,14 @@ func LoadConfigDir(dir string) (*Config, error) {
 
 	// Fast-path if we have no files
 	if len(files) == 0 {
-		return &Config{}, nil
+		return &GitConfig{}, nil
 	}
 
 	sort.Strings(files)
 
-	var result *Config
+	var result *GitConfig
 	for _, f := range files {
-		config, err := ParseConfigFile(f)
+		config, err := ParseGitConfigFile(f)
 		if err != nil {
 			return nil, fmt.Errorf("Error loading %s: %s", f, err)
 		}

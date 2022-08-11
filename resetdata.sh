@@ -1,3 +1,4 @@
+
 rm -rf ./assets/data/consul/*
 rm -rf ./assets/data/nomad/*
 

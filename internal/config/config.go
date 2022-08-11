@@ -39,6 +39,20 @@ func (c *Config) ReceivePackExePath() string {
 	return utils.Join(c.GitBinPath, "git-receive-pack.exe")
 }
 
+func (c *Config) GetRepoPath(username string, repo string) string {
+	return utils.Join(c.ReposPath, username, repo)
+}
+
+func (c *Config) GetExePath(service string) string {
+	if service == "receive-pack" {
+		return c.ReceivePackExePath()
+	} else if service == "upload-pack" {
+		return c.UploadPackExePath()
+	} else {
+		return ""
+	}
+}
+
 func (c *Config) Merge(other *Config) *Config {
 	if other.LogLevel != "" {
 		c.LogLevel = other.LogLevel

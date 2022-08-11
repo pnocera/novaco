@@ -52,7 +52,7 @@ func GitServer(config *config.Config) error {
 
 func attachHandler(r *mux.Router) {
 	//git methods Handler
-	r.HandleFunc(`/{user-name}/{repo-name}/info/refs`, basicAuthentication(infoserviceHandler)).Methods("GET")
+	r.HandleFunc(`/{user-name}/{repo-name}/info/refs`, basicAuthentication(infoserviceHandler2)).Methods("GET")
 	r.HandleFunc(`/{user-name}/{repo-name}/git-upload-pack`, basicAuthentication(uploadPackHandler2)).Methods("POST")
 	r.HandleFunc(`/{user-name}/{repo-name}/git-receive-pack`, basicAuthentication(receivePackHandler2)).Methods("POST")
 

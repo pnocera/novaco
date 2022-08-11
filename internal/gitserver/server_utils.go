@@ -24,6 +24,7 @@ func GetParamValues(r *http.Request) (string, string, string) {
 
 func FindService(r *http.Request) string {
 	s := r.URL.Query().Get("service")
+	//return s
 	service := strings.SplitN(s, "-", 2)[1]
 	return service
 }
