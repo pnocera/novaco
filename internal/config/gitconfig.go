@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/pnocera/novaco/internal/utils"
 )
@@ -83,7 +85,11 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 		c.AutoHooks = other.AutoHooks
 	}
 	if other.Hooks != nil {
-		c.Hooks = other.Hooks
+		c.Hooks = &HookScripts{
+			PreReceive:  other.Hooks.PreReceive,
+			Update:      other.Hooks.Update,
+			PostReceive: other.Hooks.PostReceive,
+		}
 	}
 	if other.Auth != false {
 		c.Auth = other.Auth
@@ -95,13 +101,13 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 func GetDefaultGitConfig() *GitConfig {
 
 	return &GitConfig{
-		LogLevel:   "info",
+		LogLevel:   "INFO",
 		Hostname:   "localhost",
 		Port:       8888,
 		KeyDir:     "",
-		Dir:        ".",
-		GitPath:    "git",
-		GitUser:    "git",
+		Dir:        "",
+		GitPath:    "",
+		GitUser:    "",
 		AutoCreate: false,
 		AutoHooks:  false,
 		Hooks:      &HookScripts{},
@@ -128,4 +134,80 @@ func NewGitConfig(configPath []string) *GitConfig {
 	}
 
 	return cfg
+}
+
+// Configure hook scripts in the repo base directory
+func (c *HookScripts) SetupInDir(path string) error {
+	basePath := utils.Join(path, "hooks")
+	scripts := map[string]string{
+		"pre-receive":  c.PreReceive,
+		"update":       c.Update,
+		"post-receive": c.PostReceive,
+	}
+
+	// Cleanup any existing hooks first
+	hookFiles, err := ioutil.ReadDir(basePath)
+	if err == nil {
+		for _, file := range hookFiles {
+			if err := os.Remove(utils.Join(basePath, file.Name())); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Write new hook files
+	for name, script := range scripts {
+		fullPath := utils.Join(basePath, name)
+
+		// Dont create hook if there's no script content
+		if script == "" {
+			continue
+		}
+
+		if err := ioutil.WriteFile(fullPath, []byte(script), 0755); err != nil {
+			log.Println("hook-update", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (c *GitConfig) KeyPath() string {
+	return utils.Join(c.KeyDir, "gitkit.rsa")
+}
+
+func (c *GitConfig) Setup() error {
+	if _, err := os.Stat(c.Dir); err != nil {
+		if err = os.Mkdir(c.Dir, 0755); err != nil {
+			return err
+		}
+	}
+
+	if c.AutoHooks == true {
+		return c.setupHooks()
+	}
+
+	return nil
+}
+
+func (c *GitConfig) setupHooks() error {
+	files, err := ioutil.ReadDir(c.Dir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if !file.IsDir() {
+			continue
+		}
+
+		path := utils.Join(c.Dir, file.Name())
+
+		if err := c.Hooks.SetupInDir(path); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

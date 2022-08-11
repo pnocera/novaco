@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/pnocera/novaco/internal/config"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -36,11 +37,11 @@ type SSH struct {
 	listener net.Listener
 
 	sshconfig           *ssh.ServerConfig
-	config              *Config
+	config              *config.GitConfig
 	PublicKeyLookupFunc func(string) (*PublicKey, error)
 }
 
-func NewSSH(config Config) *SSH {
+func NewSSH(config config.GitConfig) *SSH {
 	s := &SSH{config: &config}
 
 	// Use PATH if full path is not specified

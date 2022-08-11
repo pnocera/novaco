@@ -2,6 +2,7 @@ package gitkit
 
 import (
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,6 +10,8 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+
+	"github.com/pnocera/novaco/internal/config"
 )
 
 type service struct {
@@ -19,7 +22,7 @@ type service struct {
 }
 
 type Server struct {
-	config   Config
+	config   config.GitConfig
 	services []service
 	AuthFunc func(Credential, *Request) (bool, error)
 }
@@ -30,12 +33,13 @@ type Request struct {
 	RepoPath string
 }
 
-func New(cfg Config) *Server {
+func New(cfg config.GitConfig) *Server {
 	s := Server{config: cfg}
 	s.services = []service{
-		service{"GET", "/info/refs", s.getInfoRefs, ""},
-		service{"POST", "/git-upload-pack", s.postRPC, "git-upload-pack"},
-		service{"POST", "/git-receive-pack", s.postRPC, "git-receive-pack"},
+		{"GET", "/health", s.getHealth, ""},
+		{"GET", "/info/refs", s.getInfoRefs, ""},
+		{"POST", "/git-upload-pack", s.postRPC, "git-upload-pack"},
+		{"POST", "/git-receive-pack", s.postRPC, "git-receive-pack"},
 	}
 
 	// Use PATH if full path is not specified
@@ -64,6 +68,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	svc, repoUrlPath := s.findService(r)
 	if svc == nil {
 		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	if r.RequestURI == "/health" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+
+		p := map[string]string{
+			"status": "ok",
+		}
+		json.NewEncoder(w).Encode(p)
 		return
 	}
 
@@ -128,6 +143,17 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	svc.handler(svc.rpc, w, req)
+}
+
+func (s *Server) getHealth(rpc string, w http.ResponseWriter, req *Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	p := map[string]string{
+		"status": "ok",
+	}
+	json.NewEncoder(w).Encode(p)
+
 }
 
 func (s *Server) getInfoRefs(_ string, w http.ResponseWriter, r *Request) {
@@ -221,7 +247,7 @@ func (s *Server) Setup() error {
 	return s.config.Setup()
 }
 
-func initRepo(name string, config *Config) error {
+func initRepo(name string, config *config.GitConfig) error {
 	fullPath := path.Join(config.Dir, name)
 
 	if err := exec.Command(config.GitPath, "init", "--bare", fullPath).Run(); err != nil {
@@ -239,7 +265,7 @@ func initRepo(name string, config *Config) error {
 	}
 
 	if config.AutoHooks && config.Hooks != nil {
-		return config.Hooks.setupInDir(fullPath)
+		return config.Hooks.SetupInDir(fullPath)
 	}
 
 	return nil

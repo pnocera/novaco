@@ -1,28 +1,19 @@
 log_level = "DEBUG"
 
-shutdown_timeout  = "15s"
-
-git_bin_path = "e:/Projects/nomad/server_install/assets/bin/git"
-
-repos_path = "e:/Projects/nomad/server_install/assets/data/git"
-
 hostname = "192.168.1.145"
 
 port = 8888
 
-ssl_enable = false
+key_dir = ""
 
-auth_enabled = false
+dir = "e:/Projects/nomad/server_install/assets/data/git"
 
-passwd_file_path = "e:/Projects/nomad/server_install/assets/passwd"
+git_path = "e:/Projects/nomad/server_install/assets/bin/git"
 
-restrict_receive_pack = false
+git_user = "git"
 
-restrict_upload_pack = false
+auto_create = true
 
-cert_file_path = ""
+auto_hooks = false
 
-key_file_path = ""
-
-
-
+hook_scripts = 

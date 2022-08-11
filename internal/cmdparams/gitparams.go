@@ -14,19 +14,18 @@ func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 		return nil, err
 	}
 
-	gitconfigparams := config.Config{
-		LogLevel:            "DEBUG",
-		ShutdownTimeout:     "15s",
-		Hostname:            ip.String(),
-		Port:                8888,
-		SSLEnabled:          false,
-		AuthEnabled:         false,
-		PasswdFilePath:      utils.Join(assets, "passwd"),
-		RestrictReceivePack: false,
-		RestrictUploadPack:  false,
-
-		GitBinPath: utils.Join(assets, "bin/git"),
-		ReposPath:  utils.Join(assets, "data/git"),
+	gitconfigparams := config.GitConfig{
+		LogLevel:   "DEBUG",
+		Hostname:   ip.String(),
+		Port:       8888,
+		KeyDir:     "",
+		Dir:        utils.Join(assets, "data/git"),
+		GitPath:    utils.Join(assets, "bin/git"),
+		GitUser:    "git",
+		AutoCreate: true,
+		AutoHooks:  false,
+		Hooks:      &config.HookScripts{},
+		Auth:       false,
 	}
 
 	configtemplate := utils.Join(assets, "templates/git."+runtype+".hcl")

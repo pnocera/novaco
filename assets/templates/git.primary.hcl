@@ -1,28 +1,21 @@
 log_level = "{{.LogLevel}}"
 
-shutdown_timeout  = "{{.ShutdownTimeout}}"
-
-git_bin_path = "{{.GitBinPath}}"
-
-repos_path = "{{.ReposPath}}"
-
 hostname = "{{.Hostname}}"
 
 port = {{.Port}}
 
-ssl_enable = {{.SSLEnabled}}
+key_dir = "{{.KeyDir}}"
 
-auth_enabled = {{.AuthEnabled}}
+dir = "{{.Dir}}"
 
-passwd_file_path = "{{.PasswdFilePath}}"
+git_path = "{{.GitPath}}"
 
-restrict_receive_pack = {{.RestrictReceivePack}}
+git_user = "{{.GitUser}}"
 
-restrict_upload_pack = {{.RestrictUploadPack}}
+auto_create = {{.AutoCreate}}
 
-cert_file_path = "{{.CertFilePath}}"
+auto_hooks = {{.AutoHooks}}
 
-key_file_path = "{{.KeyFilePath}}"
+hook_scripts = {{.HookScripts}}
 
-
-
+auth = {{.Auth}}
