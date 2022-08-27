@@ -1,13 +1,12 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/hashicorp/consul/api"
-	"github.com/pnocera/novaco/internal/config"
+	"github.com/pnocera/novaco/internal/cmdparams"
 	"github.com/pnocera/novaco/internal/gitkit"
 )
 
@@ -17,17 +16,25 @@ func main() {
 	// 	PreReceive: `echo "Hello World!"`,
 	// }
 
-	configPath := []string{}
-	flag.Var((*config.StringFlag)(&configPath), "config", "config")
-	flag.Parse()
+	// configPath := []string{}
+	// flag.Var((*config.StringFlag)(&configPath), "config", "config")
+	// flag.Parse()
 
-	cfg := config.NewGitConfig(configPath)
+	cfg, err := cmdparams.GetGitConfig("primary")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = cfg.SetupSSL()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	//setup consul
 	client, _ := api.NewClient(api.DefaultConfig())
 
 	schema := "http"
-	if cfg.KeyDir != "" {
+	if cfg.TlsCertPath != "" {
 		schema = "https"
 	}
 	hcheck := fmt.Sprintf("%s://%s:%d/health", schema, cfg.Hostname, cfg.Port)
@@ -53,8 +60,8 @@ func main() {
 	http.Handle("/", service)
 
 	// Start HTTP server
-	if err := http.ListenAndServe(
-		fmt.Sprintf(":%d", cfg.Port), nil); err != nil {
+	if err := http.ListenAndServeTLS(
+		fmt.Sprintf(":%d", cfg.Port), cfg.TlsCertPath, cfg.TlsKeyPath, nil); err != nil {
 		log.Fatal(err)
 	}
 }

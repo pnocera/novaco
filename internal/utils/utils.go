@@ -1,12 +1,39 @@
 package utils
 
 import (
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
 )
+
+// Create self-signed certificate for Git TLS
+func CreateGitSelfSignedKeyCert() (string, string, error) {
+	assets, err := Assets()
+	if err != nil {
+		return "", "", err
+	}
+	key, cert, err := MakeCert()
+
+	if err != nil {
+		return "", "", err
+	}
+	outkey := Join(assets, "data/git/localhost.key")
+	outcert := Join(assets, "data/git/localhost.crt")
+	err = ioutil.WriteFile(outkey, []byte(key), 0644)
+	if err != nil {
+		return "", "", err
+	}
+	err = ioutil.WriteFile(outcert, []byte(cert), 0644)
+	if err != nil {
+		return "", "", err
+	}
+
+	return outkey, outcert, nil
+
+}
 
 func Join(elem ...string) string {
 	return filepath.ToSlash(filepath.Join(elem...))

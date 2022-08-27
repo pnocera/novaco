@@ -7,7 +7,11 @@ import (
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
+func GetGitConfig(runtype string) (*config.GitConfig, error) {
+	assets, err := utils.Assets()
+	if err != nil {
+		return nil, err
+	}
 
 	ip, err := utils.GetOutboundIP()
 	if err != nil {
@@ -37,15 +41,23 @@ func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 		return nil, err
 	}
 
+	configpaths := []string{
+		configoutput,
+		utils.Join(assets, "config/git/custom"),
+	}
+	finalconfig := config.NewGitConfig(configpaths)
+
+	return finalconfig, nil
+}
+
+func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
+
 	exefile := utils.Join(assets, "bin/git/git-server.exe")
 
 	return &ProgramParams{
-		DirPath:     filepath.Dir(exefile),
-		ExeFullname: exefile,
-		AdditionalParams: []string{
-			"-config=" + configoutput,
-			"-config=" + utils.Join(assets, "config/git/custom"),
-		},
-		LogFile: utils.Join(assets, "logs/git/git."+runtype+".log"),
+		DirPath:          filepath.Dir(exefile),
+		ExeFullname:      exefile,
+		AdditionalParams: []string{},
+		LogFile:          utils.Join(assets, "logs/git/git."+runtype+".log"),
 	}, nil
 }

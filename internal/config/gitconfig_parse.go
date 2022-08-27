@@ -64,7 +64,7 @@ func LoadGitConfig(path string) (*GitConfig, error) {
 	cleaned := filepath.Clean(path)
 	config, err := ParseGitConfigFile(cleaned)
 	if err != nil {
-		return nil, fmt.Errorf("Error loading %s: %s", cleaned, err)
+		return nil, fmt.Errorf("error loading %s: %s", cleaned, err)
 	}
 
 	return config, nil
@@ -129,7 +129,7 @@ func LoadGitConfigDir(dir string) (*GitConfig, error) {
 	for _, f := range files {
 		config, err := ParseGitConfigFile(f)
 		if err != nil {
-			return nil, fmt.Errorf("Error loading %s: %s", f, err)
+			return nil, fmt.Errorf("error loading %s: %s", f, err)
 		}
 
 		if result == nil {

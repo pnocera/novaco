@@ -6,21 +6,29 @@ import (
 	"log"
 	"os"
 
+	"github.com/pnocera/novaco/internal/hclencoder"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
 type GitConfig struct {
-	LogLevel   string       `hcl:"log_level"`
-	Hostname   string       `hcl:"hostname"`
-	Port       int          `hcl:"port"`
-	KeyDir     string       `hcl:"key_dir"`      // Directory for server ssh keys. Only used in SSH strategy.
-	Dir        string       `hcl:"dir"`          // Directory that contains repositories
-	GitPath    string       `hcl:"git_path"`     // Path to git binary
-	GitUser    string       `hcl:"git_user"`     // User for ssh connections
-	AutoCreate bool         `hcl:"auto_create"`  // Automatically create repostories
-	AutoHooks  bool         `hcl:"auto_hooks"`   // Automatically setup git hooks
-	Hooks      *HookScripts `hcl:"hook_scripts"` // Scripts for hooks/* directory
-	Auth       bool         `hcl:"auth"`         // Require authentication
+	LogLevel    string       `hcl:"log_level"`     // Log level
+	Hostname    string       `hcl:"hostname"`      // Hostname
+	Port        int          `hcl:"port"`          // Port
+	TlsCertPath string       `hcl:"tls_cert_path"` // TLS cert path
+	TlsKeyPath  string       `hcl:"tls_key_path"`  // TLS key path
+	KeyDir      string       `hcl:"key_dir"`       // Directory for server ssh keys. Only used in SSH strategy.
+	Dir         string       `hcl:"dir"`           // Directory that contains repositories
+	GitPath     string       `hcl:"git_path"`      // Path to git binary
+	GitUser     string       `hcl:"git_user"`      // User for ssh connections
+	AutoCreate  bool         `hcl:"auto_create"`   // Automatically create repostories
+	AutoHooks   bool         `hcl:"auto_hooks"`    // Automatically setup git hooks
+	Hooks       *HookScripts `hcl:"hook_scripts"`  // Scripts for hooks/* directory
+	Auth        bool         `hcl:"auth"`          // Require authentication
+}
+
+type TLSConfig struct {
+	TlsCertPath string `hcl:"tls_cert_path"` // TLS cert path
+	TlsKeyPath  string `hcl:"tls_key_path"`  // TLS key path
 }
 
 // HookScripts represents all repository server-size git hooks
@@ -78,10 +86,10 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 	if other.GitUser != "" {
 		c.GitUser = other.GitUser
 	}
-	if other.AutoCreate != false {
+	if other.AutoCreate {
 		c.AutoCreate = other.AutoCreate
 	}
-	if other.AutoHooks != false {
+	if other.AutoHooks {
 		c.AutoHooks = other.AutoHooks
 	}
 	if other.Hooks != nil {
@@ -91,8 +99,15 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 			PostReceive: other.Hooks.PostReceive,
 		}
 	}
-	if other.Auth != false {
+	if other.Auth {
 		c.Auth = other.Auth
+	}
+
+	if other.TlsCertPath != "" {
+		c.TlsCertPath = other.TlsCertPath
+	}
+	if other.TlsKeyPath != "" {
+		c.TlsKeyPath = other.TlsKeyPath
 	}
 
 	return c
@@ -103,7 +118,7 @@ func GetDefaultGitConfig() *GitConfig {
 	return &GitConfig{
 		LogLevel:   "INFO",
 		Hostname:   "localhost",
-		Port:       8888,
+		Port:       0,
 		KeyDir:     "",
 		Dir:        "",
 		GitPath:    "",
@@ -177,6 +192,39 @@ func (c *GitConfig) KeyPath() string {
 	return utils.Join(c.KeyDir, "gitkit.rsa")
 }
 
+func (c *GitConfig) SetupSSL() error {
+	var err error
+	if c.TlsCertPath != "" && c.TlsKeyPath != "" {
+		//should be ok here
+	} else {
+		//we need to create a self-signed cert
+		key, cert, err := utils.CreateGitSelfSignedKeyCert()
+		if err != nil {
+			return err
+		}
+		c.TlsCertPath = cert
+		c.TlsKeyPath = key
+		//save it to custom dir
+		tlsconfig := &TLSConfig{
+			TlsCertPath: c.TlsCertPath,
+			TlsKeyPath:  c.TlsKeyPath,
+		}
+		bytes, err := hclencoder.Encode(tlsconfig)
+		if err != nil {
+			return err
+		}
+		assets, err := utils.Assets()
+		if err != nil {
+			return err
+		}
+		err = ioutil.WriteFile(utils.Join(assets, "config/git/custom/tls.hcl"), bytes, 0644)
+		if err != nil {
+			return err
+		}
+	}
+	return err
+}
+
 func (c *GitConfig) Setup() error {
 	if _, err := os.Stat(c.Dir); err != nil {
 		if err = os.Mkdir(c.Dir, 0755); err != nil {
@@ -184,7 +232,7 @@ func (c *GitConfig) Setup() error {
 		}
 	}
 
-	if c.AutoHooks == true {
+	if c.AutoHooks {
 		return c.setupHooks()
 	}
 
