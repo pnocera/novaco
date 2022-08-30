@@ -71,14 +71,6 @@ func Assets() (string, error) {
 
 }
 
-// func curPath(dir string) (string, error) {
-// 	ex, err := os.Executable()
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	return Join(filepath.Dir(ex), dir), nil
-// }
-
 func GetOutboundIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {

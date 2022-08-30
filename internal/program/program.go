@@ -91,6 +91,15 @@ func (p program) run() {
 	if err != nil {
 		p.Logger.Error(err)
 		errs <- err
+		close(errs)
+		return
+	}
+
+	err = cmdparams.RenderIfNotExist(p.runtype)
+	if err != nil {
+		p.Logger.Error(err)
+		errs <- err
+		close(errs)
 		return
 	}
 
@@ -98,6 +107,7 @@ func (p program) run() {
 	if err != nil {
 		p.Logger.Error(err)
 		errs <- err
+		close(errs)
 		return
 	}
 

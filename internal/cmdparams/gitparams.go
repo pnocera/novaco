@@ -1,63 +1,63 @@
 package cmdparams
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/pnocera/novaco/internal/config"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-func GetGitConfig(runtype string) (*config.GitConfig, error) {
+func RenderIfNotExist(runtype string) error {
 	assets, err := utils.Assets()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	ip, err := utils.GetOutboundIP()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	gitconfigparams := config.GitConfig{
-		LogLevel:   "DEBUG",
-		Hostname:   ip.String(),
-		Port:       8888,
-		KeyDir:     "",
-		Dir:        utils.Join(assets, "data/git"),
-		GitPath:    utils.Join(assets, "bin/git"),
-		GitUser:    "git",
-		AutoCreate: true,
-		AutoHooks:  false,
-		Hooks:      &config.HookScripts{},
-		Auth:       false,
+		LogLevel:     "Info",
+		LogPath:      utils.Join(assets, "logs/git/git."+runtype+".log"),
+		LogMode:      "file",
+		HostIP:       ip.String(),
+		Port:         8888,
+		GitPath:      utils.Join(assets, "bin/git/git.exe"),
+		DatabasePath: utils.Join(assets, "data/git/git."+runtype+".db"),
+		Domain:       ip.String(),
+		RunMode:      "prod",
+		RunUser:      "COMPUTERNAME$",
 	}
 
-	configtemplate := utils.Join(assets, "templates/git."+runtype+".hcl")
-	configoutput := utils.Join(assets, "config/git/auto/git."+runtype+".hcl")
+	configtemplate := utils.Join(assets, "templates/git."+runtype+".ini")
+	configoutput := utils.Join(assets, "config/git/app.ini")
 
-	err = utils.Render(configtemplate, configoutput, gitconfigparams)
-
-	if err != nil {
-		return nil, err
+	if _, err = os.Stat(configoutput); errors.Is(err, os.ErrNotExist) {
+		err = utils.Render(configtemplate, configoutput, gitconfigparams)
 	}
 
-	configpaths := []string{
-		configoutput,
-		utils.Join(assets, "config/git/custom"),
-	}
-	finalconfig := config.NewGitConfig(configpaths)
-
-	return finalconfig, nil
+	return err
 }
 
 func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 
-	exefile := utils.Join(assets, "bin/git/git-server.exe")
+	exefile := utils.Join(assets, "bin/git/gitea.exe")
 
 	return &ProgramParams{
-		DirPath:          filepath.Dir(exefile),
-		ExeFullname:      exefile,
-		AdditionalParams: []string{},
-		LogFile:          utils.Join(assets, "logs/git/git."+runtype+".log"),
+		DirPath:     filepath.Dir(exefile),
+		ExeFullname: exefile,
+		AdditionalParams: []string{
+			"web",
+			"-c",
+			utils.Join(assets, "config/git/app.ini"),
+			"-w",
+			utils.Join(assets, "data/git"),
+			"--verbose",
+		},
+		LogFile: utils.Join(assets, "logs/git/git."+runtype+".log"),
 	}, nil
 }
