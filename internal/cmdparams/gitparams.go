@@ -20,6 +20,12 @@ func RenderIfNotExist(runtype string) error {
 		return err
 	}
 
+	runmode := "dev"
+
+	if runtype == "primary" {
+		runmode = "prod"
+	}
+
 	gitconfigparams := config.GitConfig{
 		LogLevel:     "Info",
 		LogPath:      utils.Join(assets, "logs/git/git."+runtype+".log"),
@@ -29,11 +35,11 @@ func RenderIfNotExist(runtype string) error {
 		GitPath:      utils.Join(assets, "bin/git/git.exe"),
 		DatabasePath: utils.Join(assets, "data/git/git."+runtype+".db"),
 		Domain:       ip.String(),
-		RunMode:      "prod",
+		RunMode:      runmode,
 		RunUser:      "COMPUTERNAME$",
 	}
 
-	configtemplate := utils.Join(assets, "templates/git."+runtype+".ini")
+	configtemplate := utils.Join(assets, "templates/"+runtype+"/git.ini")
 	configoutput := utils.Join(assets, "config/git/app.ini")
 
 	if _, err = os.Stat(configoutput); errors.Is(err, os.ErrNotExist) {

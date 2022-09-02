@@ -43,7 +43,7 @@ func GetConsulProgramParams(assets string, runtype string) (*ProgramParams, erro
 		AddressesHttp:  ip.String() + " 127.0.0.1",
 	}
 
-	configtemplate := utils.Join(assets, "templates/consul."+runtype+".hcl")
+	configtemplate := utils.Join(assets, "templates/"+runtype+"/consul.hcl")
 	configoutput := utils.Join(assets, "config/consul/auto/consul."+runtype+".hcl")
 	err = utils.Render(configtemplate, configoutput, consulconfigparams)
 
@@ -53,14 +53,20 @@ func GetConsulProgramParams(assets string, runtype string) (*ProgramParams, erro
 
 	exefile := utils.Join(assets, "bin/consul/consul_"+runtime.GOARCH+".exe")
 
+	additionalparams := []string{
+		"agent",
+		"-config-file=" + configoutput,
+		"-config-file=" + utils.Join(assets, "config/consul/custom"),
+	}
+
+	if runtype == "dev" {
+		additionalparams = append(additionalparams, "-dev")
+	}
+
 	return &ProgramParams{
-		DirPath:     filepath.Dir(exefile),
-		ExeFullname: exefile,
-		AdditionalParams: []string{
-			"agent",
-			"-config-file=" + configoutput,
-			"-config-file=" + utils.Join(assets, "config/consul/custom"),
-		},
-		LogFile: utils.Join(assets, "logs/consul/consul."+runtype+".log"),
+		DirPath:          filepath.Dir(exefile),
+		ExeFullname:      exefile,
+		AdditionalParams: additionalparams,
+		LogFile:          utils.Join(assets, "logs/consul/consul."+runtype+".log"),
 	}, nil
 }

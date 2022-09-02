@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	program.StartNew("primary")
+	program.StartNew("dev")
 }

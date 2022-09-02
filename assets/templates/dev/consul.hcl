@@ -23,3 +23,20 @@ connect {
 addresses {
     http = "{{.AddressesHttp}}"
 }
+
+service {
+  name = "gitea"
+  id   = "gitea"
+  port = 8888
+  tags = ["primary"]
+
+  checks = [
+    {
+        id = "gitea-healthcheck"
+        name = "Gitea Healthcheck"
+        http = "http://{{.BindAddr}}:8888/api/healthz"
+        interval = "10s"
+    }
+  ]
+
+}

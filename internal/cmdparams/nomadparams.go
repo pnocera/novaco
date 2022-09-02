@@ -30,7 +30,7 @@ func GetNomadProgramParams(assets string, runtype string) (*ProgramParams, error
 		BindAddr:        "0.0.0.0",
 	}
 
-	configtemplate := utils.Join(assets, "templates/nomad."+runtype+".hcl")
+	configtemplate := utils.Join(assets, "templates/"+runtype+"/nomad.hcl")
 	configoutput := utils.Join(assets, "config/nomad/auto/nomad."+runtype+".hcl")
 
 	err = utils.Render(configtemplate, configoutput, nomadconfigparams)
@@ -41,14 +41,20 @@ func GetNomadProgramParams(assets string, runtype string) (*ProgramParams, error
 
 	exefile := utils.Join(assets, "bin/nomad/nomad_"+runtime.GOARCH+".exe")
 
+	additionalparams := []string{
+		"agent",
+		"-config=" + configoutput,
+		"-config=" + utils.Join(assets, "config/nomad/custom"),
+	}
+
+	if runtype == "dev" {
+		additionalparams = append(additionalparams, "-dev")
+	}
+
 	return &ProgramParams{
-		DirPath:     filepath.Dir(exefile),
-		ExeFullname: exefile,
-		AdditionalParams: []string{
-			"agent",
-			"-config=" + configoutput,
-			"-config=" + utils.Join(assets, "config/nomad/custom"),
-		},
-		LogFile: utils.Join(assets, "logs/nomad/nomad."+runtype+".log"),
+		DirPath:          filepath.Dir(exefile),
+		ExeFullname:      exefile,
+		AdditionalParams: additionalparams,
+		LogFile:          utils.Join(assets, "logs/nomad/nomad."+runtype+".log"),
 	}, nil
 }

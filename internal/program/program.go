@@ -160,15 +160,25 @@ func (p program) ExecAndWait(commands []cmdparams.ProgramParams) error {
 		cmd := exec.Command(param.ExeFullname, param.AdditionalParams...)
 		cmd.Dir = param.DirPath
 
-		cmderr := os.Stderr
+		var f *os.File = nil
 		if param.LogFile != "" {
-			logfile, err := os.Create(param.LogFile)
-			if err == nil {
-				cmderr = logfile
-			}
+			f, _ = os.OpenFile(param.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		}
+		// if f != nil {
+		// 	defer f.Close()
+		// }
+
+		cmderr := os.Stderr
+		if f != nil {
+			cmderr = f
 		}
 
-		cmd.Stdout = os.Stdout
+		cmdout := os.Stdout
+		if f != nil {
+			cmdout = f
+		}
+
+		cmd.Stdout = cmdout
 		cmd.Stderr = cmderr
 
 		writingSync.Lock()

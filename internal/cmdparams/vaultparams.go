@@ -20,11 +20,6 @@ type VaultConfigParams struct {
 
 func GetVaultProgramParams(assets string, runtype string) (*ProgramParams, error) {
 
-	// vaultdir := utils.Join(assets, "vault")
-
-	// configtemplate := utils.Join(vaultdir, "templates/vault.server.hcl")
-	// configoutput := utils.Join(vaultdir, "config/vault.server.hcl")
-
 	ip, err := utils.GetOutboundIP()
 	if err != nil {
 		return nil, err
@@ -41,7 +36,7 @@ func GetVaultProgramParams(assets string, runtype string) (*ProgramParams, error
 		UiEnabled:                true,
 	}
 
-	configtemplate := utils.Join(assets, "templates/vault."+runtype+".hcl")
+	configtemplate := utils.Join(assets, "templates/"+runtype+"/vault.hcl")
 	configoutput := utils.Join(assets, "config/vault/auto/vault."+runtype+".hcl")
 
 	err = utils.Render(configtemplate, configoutput, vaultconfigparams)
@@ -52,14 +47,20 @@ func GetVaultProgramParams(assets string, runtype string) (*ProgramParams, error
 
 	exefile := utils.Join(assets, "bin/vault/vault_"+runtime.GOARCH+".exe")
 
+	additionalparams := []string{
+		"server",
+		"-config=" + configoutput,
+		"-config=" + utils.Join(assets, "config/vault/custom"),
+	}
+
+	if runtype == "dev" {
+		additionalparams = append(additionalparams, "-dev")
+	}
+
 	return &ProgramParams{
-		DirPath:     filepath.Dir(exefile),
-		ExeFullname: exefile,
-		AdditionalParams: []string{
-			"server",
-			"-config=" + configoutput,
-			"-config=" + utils.Join(assets, "config/vault/custom"),
-		},
-		LogFile: utils.Join(assets, "logs/vault/vault."+runtype+".log"),
+		DirPath:          filepath.Dir(exefile),
+		ExeFullname:      exefile,
+		AdditionalParams: additionalparams,
+		LogFile:          utils.Join(assets, "logs/vault/vault."+runtype+".log"),
 	}, nil
 }
