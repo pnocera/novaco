@@ -64,6 +64,7 @@ func GetConsulProgramParams(assets string, runtype string) (*ProgramParams, erro
 	}
 
 	return &ProgramParams{
+		ID:               "consul",
 		DirPath:          filepath.Dir(exefile),
 		ExeFullname:      exefile,
 		AdditionalParams: additionalparams,

@@ -22,31 +22,6 @@ type program struct {
 	Logger  service.Logger
 }
 
-func StartNew(runtype string) {
-	svcConfig := &service.Config{
-		Name:        "gci-nomad-" + runtype,
-		DisplayName: "GCI Nomad Server " + runtype,
-		Description: "A Hashicorp Nomad server",
-	}
-
-	prg := NewProgram(runtype)
-	s, err := service.New(prg, svcConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	logger, err := s.Logger(nil)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = s.Run()
-	logger.Info("Service stopped")
-	if err != nil {
-		logger.Error(err)
-	}
-}
-
 func NewProgram(runtype string) *program {
 
 	return &program{runtype: runtype}
@@ -95,7 +70,7 @@ func (p program) run() {
 		return
 	}
 
-	err = cmdparams.RenderIfNotExist(p.runtype)
+	err = cmdparams.RenderGitConfigIfNotExist(p.runtype)
 	if err != nil {
 		p.Logger.Error(err)
 		errs <- err

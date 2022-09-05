@@ -58,6 +58,7 @@ func GetVaultProgramParams(assets string, runtype string) (*ProgramParams, error
 	}
 
 	return &ProgramParams{
+		ID:               "vault",
 		DirPath:          filepath.Dir(exefile),
 		ExeFullname:      exefile,
 		AdditionalParams: additionalparams,

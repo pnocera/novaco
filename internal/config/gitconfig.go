@@ -5,12 +5,14 @@ type GitConfig struct {
 	RunMode      string `hcl:"run_mode"`      // Service run mode "dev", "prod" or "test"
 	GitPath      string `hcl:"git_path"`      // Git binary full path
 	DatabasePath string `hcl:"database_path"` // Path to database db
+	RepoPath     string `hcl:"repo_path"`     // Path to git repositories
 	LogMode      string `hcl:"log_mode"`      // Log mode "console", "file" or "syslog"
 	LogLevel     string `hcl:"log_level"`     // Log level
 	LogPath      string `hcl:"log_path"`      // Log path
 	Domain       string `hcl:"domain"`        // Domain eg localhost
 	HostIP       string `hcl:"hostip"`        // Host IP
 	Port         int    `hcl:"port"`          // Port
+	LfsPath      string `hcl:"lfs_path"`      // Path to git lfs
 }
 
 type TLSConfig struct {

@@ -1,9 +1,13 @@
 package main
 
 import (
-	"github.com/pnocera/novaco/internal/program"
+	"flag"
+
+	"github.com/pnocera/novaco/internal/service"
 )
 
 func main() {
-	program.StartNew("dev")
+	mode := flag.String("mode", "primary", "primary or secondary or dev")
+
+	service.StartNew(*mode)
 }

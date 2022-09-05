@@ -16,3 +16,5 @@ nomad : http://192.168.1.145:4646
 git server : http://192.168.1.145:8888
 
 openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=www.example.com" -keyout www.example.com.key  -out www.example.com.cert
+
+gitea web -c 

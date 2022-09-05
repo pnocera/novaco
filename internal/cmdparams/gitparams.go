@@ -9,7 +9,15 @@ import (
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-func RenderIfNotExist(runtype string) error {
+func GetGitIniFilePath(runtype string) (string, error) {
+	assets, err := utils.Assets()
+	if err != nil {
+		return "", err
+	}
+	return utils.Join(assets, "config/git/app.ini"), nil
+}
+
+func RenderGitConfigIfNotExist(runtype string) error {
 	assets, err := utils.Assets()
 	if err != nil {
 		return err
@@ -27,9 +35,9 @@ func RenderIfNotExist(runtype string) error {
 	}
 
 	gitconfigparams := config.GitConfig{
-		LogLevel:     "Info",
+		LogLevel:     "debug",
 		LogPath:      utils.Join(assets, "logs/git/git."+runtype+".log"),
-		LogMode:      "file",
+		LogMode:      "console",
 		HostIP:       ip.String(),
 		Port:         8888,
 		GitPath:      utils.Join(assets, "bin/git/git.exe"),
@@ -37,6 +45,8 @@ func RenderIfNotExist(runtype string) error {
 		Domain:       ip.String(),
 		RunMode:      runmode,
 		RunUser:      "COMPUTERNAME$",
+		RepoPath:     utils.Join(assets, "data/git/repo"),
+		LfsPath:      utils.Join(assets, "data/git/lfs"),
 	}
 
 	configtemplate := utils.Join(assets, "templates/"+runtype+"/git.ini")
@@ -54,6 +64,7 @@ func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 	exefile := utils.Join(assets, "bin/git/gitea.exe")
 
 	return &ProgramParams{
+		ID:          "gitea",
 		DirPath:     filepath.Dir(exefile),
 		ExeFullname: exefile,
 		AdditionalParams: []string{
@@ -66,4 +77,8 @@ func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 		},
 		LogFile: utils.Join(assets, "logs/git/git."+runtype+".log"),
 	}, nil
+}
+
+func ExecP() {
+
 }

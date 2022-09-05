@@ -1,6 +1,10 @@
 .vscode
 
+**/*.old
+
 **/*.exe
+
+**/*.dll
 
 data/
 

@@ -52,6 +52,7 @@ func GetNomadProgramParams(assets string, runtype string) (*ProgramParams, error
 	}
 
 	return &ProgramParams{
+		ID:               "nomad",
 		DirPath:          filepath.Dir(exefile),
 		ExeFullname:      exefile,
 		AdditionalParams: additionalparams,
