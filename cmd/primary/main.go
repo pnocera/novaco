@@ -9,5 +9,5 @@ import (
 func main() {
 	mode := flag.String("mode", "primary", "primary or secondary or dev")
 
-	service.StartNew(*mode)
+	_ = service.StartNew(*mode)
 }

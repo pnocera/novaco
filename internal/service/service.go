@@ -1,13 +1,14 @@
 package service
 
 import (
-	"log"
-
 	"github.com/kardianos/service"
+	"github.com/pnocera/novaco/internal/klogger"
 	"github.com/pnocera/novaco/internal/newprogram"
 )
 
-func StartNew(runtype string) {
+var klog = klogger.NewKLogger("service")
+
+func StartNew(runtype string) error {
 
 	svcConfig := &service.Config{
 		Name:        "gci-nomad-" + runtype,
@@ -18,12 +19,15 @@ func StartNew(runtype string) {
 	prg := newprogram.NewProgram(runtype)
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		log.Printf("Error creating new service %v", err)
+		klog.Error("Error creating service: %v", err)
+		return err
 	}
 
 	err = s.Run()
-	log.Println("Service stopped")
+
 	if err != nil {
-		log.Printf("Error running service %v", err)
+		klog.Error("Error running service: %v", err)
 	}
+	klog.Info("Service stopped")
+	return err
 }

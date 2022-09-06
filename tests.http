@@ -1,6 +1,0 @@
-POST http://localhost:8888/api/repos/create
-
-{
-    "username": "admin",
-    "reponame": "testapp"
-}

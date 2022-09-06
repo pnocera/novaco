@@ -2,16 +2,19 @@ package newprogram
 
 import (
 	"fmt"
-	"log"
 	"os"
+	"strings"
 
 	cmd "github.com/ShinyTrinkets/overseer"
 
 	"github.com/go-ini/ini"
 	"github.com/kardianos/service"
 	"github.com/pnocera/novaco/internal/cmdparams"
+	"github.com/pnocera/novaco/internal/klogger"
 	"github.com/pnocera/novaco/internal/utils"
 )
+
+var klog = klogger.NewKLogger("newprogram")
 
 type newprogram struct {
 	runtype string
@@ -40,66 +43,69 @@ func (p newprogram) run() error {
 
 	assets, err := utils.Assets()
 	if err != nil {
+		klog.Error("Error getting assets path: %v", err)
 		return err
 	}
 
 	err = cmdparams.RenderGitConfigIfNotExist(p.runtype)
 	if err != nil {
+		klog.Error("Error rendering git config: %v", err)
 		return err
 	}
 
 	gitparams, err := cmdparams.GetGitParams(assets, p.runtype)
 	if err != nil {
+		klog.Error("Error getting git params: %v", err)
 		return err
 	}
 
 	nomadparams, err := cmdparams.GetNomadProgramParams(assets, p.runtype)
 	if err != nil {
+		klog.Error("Error getting nomad params: %v", err)
 		return err
 	}
 
 	consulparams, err := cmdparams.GetConsulProgramParams(assets, p.runtype)
 	if err != nil {
+		klog.Error("Error getting consul params: %v", err)
 		return err
 	}
 
 	vaultparams, err := cmdparams.GetVaultProgramParams(assets, p.runtype)
 	if err != nil {
+		klog.Error("Error getting vault params: %v", err)
 		return err
 	}
 
 	progparams = append(
 		progparams,
-		// *consulparams,
-		// *vaultparams,
-		// *nomadparams,
+		*consulparams,
+		*vaultparams,
+		*nomadparams,
 		*gitparams)
 
-	log.Printf("consulparams: %v", *consulparams)
-	log.Printf("vaultparams: %v", *vaultparams)
-	log.Printf("nomadparams: %v", *nomadparams)
-	log.Printf("gitparams: %v", *gitparams)
+	// log.Printf("consulparams: %v", *consulparams)
+	// log.Printf("vaultparams: %v", *vaultparams)
+	// log.Printf("nomadparams: %v", *nomadparams)
+	// log.Printf("gitparams: %v", *gitparams)
 
 	err = p.ExecAndWait(progparams)
+	if err != nil {
+		klog.Error("Error executing programs: %v", err)
+	}
 
 	return err
 
 }
 
-// type DummyLogger struct {
-// 	Name string
-// }
-
-// func (l *DummyLogger) Info(msg string, v ...interface{}) {
-// 	log.Println(msg, v)
-// }
-// func (l *DummyLogger) Error(msg string, v ...interface{}) {
-// 	log.Println(msg, v)
-// }
-
 func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
+
 	cmd.SetupLogBuilder(func(name string) cmd.Logger {
-		logger := NewKLogger(name)
+		name2 := name
+		if strings.Contains(name, ":") {
+			name2 = strings.Split(name, ":")[1]
+		}
+		logger := klogger.NewKLogger(name2)
 		return logger
 	})
 
@@ -123,20 +129,21 @@ func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
 					// wait for health check
 					gitini, err := cmdparams.GetGitIniFilePath(p.runtype)
 					if err != nil {
-						log.Printf("%v", err)
+						klog.Error("Error getting git ini file path: %v", err)
+
 					} else {
 						cfg, err := ini.Load(gitini)
 						if err != nil {
-							log.Printf("%v", err)
+							klog.Error("Error loading git ini file: %v", err)
 						} else {
 							url := cfg.Section("server").Key("ROOT_URL").String()
 							err = utils.WaitForUrl(url)
 							if err != nil {
-								log.Printf("%v", err)
+								klog.Error("Error waiting for git url: %v", err)
 							} else {
 								err = utils.InitGitea(p.runtype)
 								if err != nil {
-									log.Printf("%v", err)
+									klog.Error("Error initializing gitea: %v", err)
 								}
 							}
 						}
@@ -153,6 +160,7 @@ func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
 
 	go func() {
 		for logmsg := range logFeed {
+
 			fmt.Printf("LOG: %v\n", logmsg)
 		}
 	}()
@@ -160,8 +168,4 @@ func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
 	p.ovr.SuperviseAll()
 
 	return nil
-}
-
-func NewKLogger(name string) {
-	panic("unimplemented")
 }
