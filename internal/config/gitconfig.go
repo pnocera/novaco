@@ -8,10 +8,9 @@ type GitConfig struct {
 	RepoPath     string `hcl:"repo_path"`     // Path to git repositories
 	LogMode      string `hcl:"log_mode"`      // Log mode "console", "file" or "syslog"
 	LogLevel     string `hcl:"log_level"`     // Log level
-	LogPath      string `hcl:"log_path"`      // Log path
 	Domain       string `hcl:"domain"`        // Domain eg localhost
 	HostIP       string `hcl:"hostip"`        // Host IP
-	Port         int    `hcl:"port"`          // Port
+	Port         string `hcl:"port"`          // Port
 	LfsPath      string `hcl:"lfs_path"`      // Path to git lfs
 }
 
@@ -25,9 +24,6 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 		c.LogLevel = other.LogLevel
 	}
 
-	if other.LogPath != "" {
-		c.LogPath = other.LogPath
-	}
 	if other.RunUser != "" {
 		c.RunUser = other.RunUser
 	}
@@ -46,7 +42,7 @@ func (c *GitConfig) Merge(other *GitConfig) *GitConfig {
 	if other.HostIP != "" {
 		c.HostIP = other.HostIP
 	}
-	if other.Port != 0 {
+	if other.Port != "" {
 		c.Port = other.Port
 	}
 

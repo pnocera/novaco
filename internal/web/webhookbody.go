@@ -1,13 +1,4 @@
-package main
-
-import (
-	"flag"
-	"fmt"
-	"net/http"
-
-	"code.gitea.io/sdk/gitea"
-	"github.com/gin-gonic/gin"
-)
+package web
 
 type WebhookBody struct {
 	Secret     string `json:"secret"`
@@ -74,45 +65,4 @@ type WebhookBody struct {
 		AvatarURL string `json:"avatar_url"`
 		Username  string `json:"username"`
 	} `json:"sender"`
-}
-
-func main() {
-
-	addressport := flag.String("addressport", ":8080", "address and port to listen on")
-
-	gittoken := flag.String("gittoken", "", "git token")
-	giturl := flag.String("giturl", "", "git url")
-
-	router := gin.Default()
-
-	v1 := router.Group("/v1")
-	{
-		v1.POST("/webhook", func(c *gin.Context) {
-			var webhookBody WebhookBody
-			if err := c.ShouldBindJSON(&webhookBody); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-
-			client, err := gitea.NewClient(*giturl, InitClient)
-
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			fmt.Sprintf("client: %v", client)
-			fmt.Sprintf("gittoken : %v", *gittoken)
-
-			c.JSON(http.StatusOK, gin.H{
-				"message": "ok",
-			})
-		})
-	}
-
-	router.Run(*addressport)
-}
-
-func InitClient(client *gitea.Client) error {
-
-	return nil
 }

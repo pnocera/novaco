@@ -2,32 +2,32 @@ package service
 
 import (
 	"github.com/kardianos/service"
-	"github.com/pnocera/novaco/internal/klogger"
 	"github.com/pnocera/novaco/internal/newprogram"
+	"github.com/pnocera/novaco/internal/utils"
 )
 
-var klog = klogger.NewKLogger("service")
+var logger = utils.NewKLogger("service")
 
-func StartNew(runtype string) error {
+func StartNew() error {
 
 	svcConfig := &service.Config{
-		Name:        "gci-nomad-" + runtype,
-		DisplayName: "GCI Nomad Server " + runtype,
+		Name:        "gci-nomad",
+		DisplayName: "GCI Nomad Server ",
 		Description: "A Hashicorp Nomad server",
 	}
 
-	prg := newprogram.NewProgram(runtype)
+	prg := newprogram.NewProgram()
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		klog.Error("Error creating service: %v", err)
+		logger.Error("Error creating service: %v", err)
 		return err
 	}
 
 	err = s.Run()
 
 	if err != nil {
-		klog.Error("Error running service: %v", err)
+		logger.Error("Error running service: %v", err)
 	}
-	klog.Info("Service stopped")
+	logger.Info("Service stopped")
 	return err
 }

@@ -6,18 +6,17 @@ import (
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-func GetProxyParams(assets string, runtype string) (*ProgramParams, error) {
+func GetProxyParams() (*ProgramParams, error) {
 
-	exefile := utils.Join(assets, "bin/csi-proxy/csi-proxy.exe")
+	exefile := utils.Join(utils.BinPath("csi-proxy"), "csi-proxy.exe")
 
 	return &ProgramParams{
-		ID:          "gitea",
+		ID:          "csiproxy",
 		DirPath:     filepath.Dir(exefile),
 		ExeFullname: exefile,
 		AdditionalParams: []string{
-			"kubelet-path",
-			utils.Join(assets, "data/csi-proxy"),
+			"-kubelet-path",
+			utils.DataPath("csi-proxy"),
 		},
-		LogFile: utils.Join(assets, "logs/csi-proxy/csi-proxy."+runtype+".log"),
 	}, nil
 }

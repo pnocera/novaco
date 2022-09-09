@@ -11,7 +11,7 @@ git remote add origin http://localhost:8888/admin/testapp.git
 git push -u origin main
 
 vault : http://192.168.1.145:8200
-consul : http://localhost:8500
+consul : http://192.168.1.145:8500
 nomad : http://192.168.1.145:4646
 git server : http://192.168.1.145:8888
 

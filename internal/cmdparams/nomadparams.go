@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"runtime"
 
+	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
@@ -15,40 +16,30 @@ type NomadConfigParams struct {
 	BindAddr        string
 }
 
-func GetNomadProgramParams(assets string, runtype string) (*ProgramParams, error) {
-
-	ip, err := utils.GetOutboundIP()
-	if err != nil {
-		return nil, err
-	}
+func GetNomadProgramParams() (*ProgramParams, error) {
 
 	nomadconfigparams := NomadConfigParams{
-		LogLevel:        "DEBUG",
-		DataDir:         utils.Join(assets, "data/nomad"),
+		LogLevel:        settings.GetSettings().LogLevel,
+		DataDir:         utils.DataPath("nomad"),
 		BootstrapExpect: 1,
-		AdvertiseAddr:   ip.String(),
+		AdvertiseAddr:   utils.IP(),
 		BindAddr:        "0.0.0.0",
 	}
 
-	configtemplate := utils.Join(assets, "templates/"+runtype+"/nomad.hcl")
-	configoutput := utils.Join(assets, "config/nomad/auto/nomad."+runtype+".hcl")
+	configtemplate := utils.TemplatePath("nomad.hcl")
+	configoutput := utils.Join(utils.ConfigPath("nomad"), "nomad.hcl")
 
-	err = utils.Render(configtemplate, configoutput, nomadconfigparams)
+	err := utils.Render(configtemplate, configoutput, nomadconfigparams)
 
 	if err != nil {
 		return nil, err
 	}
 
-	exefile := utils.Join(assets, "bin/nomad/nomad_"+runtime.GOARCH+".exe")
+	exefile := utils.Join(utils.BinPath("nomad"), "nomad_"+runtime.GOARCH+".exe") //  "nomad.exe") //
 
 	additionalparams := []string{
 		"agent",
-		"-config=" + configoutput,
-		"-config=" + utils.Join(assets, "config/nomad/custom"),
-	}
-
-	if runtype == "dev" {
-		additionalparams = append(additionalparams, "-dev")
+		"-config=" + utils.ConfigPath("nomad"),
 	}
 
 	return &ProgramParams{
@@ -56,6 +47,5 @@ func GetNomadProgramParams(assets string, runtype string) (*ProgramParams, error
 		DirPath:          filepath.Dir(exefile),
 		ExeFullname:      exefile,
 		AdditionalParams: additionalparams,
-		LogFile:          utils.Join(assets, "logs/nomad/nomad."+runtype+".log"),
 	}, nil
 }

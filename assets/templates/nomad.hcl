@@ -7,6 +7,17 @@ server {
     bootstrap_expect = {{.BootstrapExpect}}
 }
 
+client {
+    enabled = true
+    servers = ["{{.BindAddr}}"]
+}
+
+plugin "raw_exec" {
+    config {
+        enabled = true
+    }
+}
+
 advertise {
     http = "{{.AdvertiseAddr}}"
     rpc  = "{{.AdvertiseAddr}}"

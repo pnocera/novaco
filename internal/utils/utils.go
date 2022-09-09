@@ -1,77 +1,26 @@
 package utils
 
 import (
-	"io/ioutil"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
 	"text/template"
+
+	cmd "github.com/ShinyTrinkets/overseer"
+	"github.com/go-ini/ini"
 )
 
-// Create self-signed certificate for Git TLS
-func CreateGitSelfSignedKeyCert() (string, string, error) {
-	assets, err := Assets()
+func IP() string {
+	ip, err := GetIP()
 	if err != nil {
-		return "", "", err
-	}
-	key, cert, err := MakeCert()
-
-	if err != nil {
-		return "", "", err
-	}
-	outkey := Join(assets, "data/git/localhost.key")
-	outcert := Join(assets, "data/git/localhost.crt")
-	err = ioutil.WriteFile(outkey, []byte(key), 0644)
-	if err != nil {
-		return "", "", err
-	}
-	err = ioutil.WriteFile(outcert, []byte(cert), 0644)
-	if err != nil {
-		return "", "", err
+		logger.Error("Error getting IP address", err)
+		return "127.0.0.1"
 	}
 
-	return outkey, outcert, nil
-
+	return ip.String()
 }
 
-func Join(elem ...string) string {
-	return filepath.ToSlash(filepath.Join(elem...))
-}
-
-func Assets() (string, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
-
-	assets := Join(ex, "assets")
-	_, err = os.Stat(assets)
-
-	if os.IsNotExist(err) {
-		//try to get it from the parent folder
-		assets = Join(filepath.Dir(ex), "assets")
-	}
-	_, err = os.Stat(assets)
-	if os.IsNotExist(err) {
-		//try to get it from the parent folder
-		assets = Join(filepath.Dir(filepath.Dir(ex)), "assets")
-	}
-
-	_, err = os.Stat(assets)
-	if os.IsNotExist(err) {
-		//try to get it from the parent folder
-		assets = Join(filepath.Dir(filepath.Dir(filepath.Dir(ex))), "assets")
-	}
-	_, err = os.Stat(assets)
-	if os.IsNotExist(err) {
-		return "", err
-	}
-	return assets, nil
-
-}
-
-func GetOutboundIP() (net.IP, error) {
+func GetIP() (net.IP, error) {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return nil, err
@@ -102,4 +51,41 @@ func IsTemporaryFile(name string) bool {
 	return strings.HasSuffix(name, "~") || // vim
 		strings.HasPrefix(name, ".#") || // emacs
 		(strings.HasPrefix(name, "#") && strings.HasSuffix(name, "#")) // emacs
+}
+
+func WatchStatus(statusFeed chan *cmd.ProcessJSON) {
+
+	go func() {
+		for state := range statusFeed {
+			if state.ID == "gitea" && state.State == "running" {
+				// do relevant git initialization here
+				gitini := Join(ConfigPath("gitea"), "gitea.ini")
+				cfg, err := ini.Load(gitini)
+				if err != nil {
+					logger.Error("Error loading git ini file: %v", err)
+				} else {
+					url := cfg.Section("server").Key("ROOT_URL").String()
+
+					err = WaitForUrl(url)
+					if err != nil {
+						logger.Error("Error waiting for git url: %v", err)
+					} else {
+						err = InitGitea()
+						if err != nil {
+							logger.Error("Error initializing gitea: %v", err)
+						}
+					}
+				}
+			}
+		}
+	}()
+}
+
+func StringsContains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }

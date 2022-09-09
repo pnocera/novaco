@@ -6,62 +6,43 @@ import (
 	"path/filepath"
 
 	"github.com/pnocera/novaco/internal/config"
+	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-func GetGitIniFilePath(runtype string) (string, error) {
-	assets, err := utils.Assets()
-	if err != nil {
-		return "", err
-	}
-	return utils.Join(assets, "config/git/app.ini"), nil
-}
+var sets = settings.GetSettings()
 
-func RenderGitConfigIfNotExist(runtype string) error {
-	assets, err := utils.Assets()
-	if err != nil {
-		return err
-	}
+func RenderGitConfigIfNotExist() error {
 
-	ip, err := utils.GetOutboundIP()
-	if err != nil {
-		return err
-	}
-
-	runmode := "dev"
-
-	if runtype == "primary" {
-		runmode = "prod"
-	}
-
+	datapath := utils.DataPath("gitea")
 	gitconfigparams := config.GitConfig{
-		LogLevel:     "debug",
-		LogPath:      utils.Join(assets, "logs/git/git."+runtype+".log"),
+		LogLevel:     sets.FirstUppercaseLogLevel(),
 		LogMode:      "console",
-		HostIP:       ip.String(),
-		Port:         8888,
-		GitPath:      utils.Join(assets, "bin/git/git.exe"),
-		DatabasePath: utils.Join(assets, "data/git/git."+runtype+".db"),
-		Domain:       ip.String(),
-		RunMode:      runmode,
+		HostIP:       utils.IP(),
+		Port:         sets.GitPort,
+		GitPath:      utils.Join(utils.BinPath("gitea"), "git.exe"),
+		DatabasePath: utils.Join(datapath, "gitea.db"),
+		Domain:       utils.IP(),
+		RunMode:      "prod",
 		RunUser:      "COMPUTERNAME$",
-		RepoPath:     utils.Join(assets, "data/git/repo"),
-		LfsPath:      utils.Join(assets, "data/git/lfs"),
+		RepoPath:     utils.Join(datapath, "repo"),
+		LfsPath:      utils.Join(datapath, "lfs"),
 	}
 
-	configtemplate := utils.Join(assets, "templates/"+runtype+"/git.ini")
-	configoutput := utils.Join(assets, "config/git/app.ini")
+	configtemplate := utils.TemplatePath("gitea.ini")
+	configoutput := utils.Join(utils.ConfigPath("gitea"), "gitea.ini")
 
-	if _, err = os.Stat(configoutput); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(configoutput); errors.Is(err, os.ErrNotExist) {
 		err = utils.Render(configtemplate, configoutput, gitconfigparams)
+		return err
 	}
 
-	return err
+	return nil
 }
 
-func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
+func GetGitParams() (*ProgramParams, error) {
 
-	exefile := utils.Join(assets, "bin/git/gitea.exe")
+	exefile := utils.Join(utils.BinPath("gitea"), "gitea.exe")
 
 	return &ProgramParams{
 		ID:          "gitea",
@@ -70,15 +51,10 @@ func GetGitParams(assets string, runtype string) (*ProgramParams, error) {
 		AdditionalParams: []string{
 			"web",
 			"-c",
-			utils.Join(assets, "config/git/app.ini"),
+			utils.Join(utils.ConfigPath("gitea"), "gitea.ini"),
 			"-w",
-			utils.Join(assets, "data/git"),
+			utils.DataPath("gitea"),
 			"--verbose",
 		},
-		LogFile: utils.Join(assets, "logs/git/git."+runtype+".log"),
 	}, nil
-}
-
-func ExecP() {
-
 }

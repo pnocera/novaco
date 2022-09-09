@@ -1,6 +1,6 @@
 log_level = "DEBUG"
 
-data_dir = "e:/Projects/nomad/server_install/assets/data/consul"
+data_dir = "e:/Projects/nomad/server_install/data/consul"
 
 datacenter = "dc1"
 
