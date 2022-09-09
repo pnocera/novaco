@@ -50,6 +50,10 @@ func (s *settings) FirstUppercaseLogLevel() string {
 	return cases.Title(language.Und).String(s.LogLevel)
 }
 
+func (s *settings) UppercaseLogLevel() string {
+	return strings.ToUpper(s.LogLevel)
+}
+
 func (s *settings) GetZapLevel() zapcore.Level {
 	if strings.ToLower(s.LogLevel) == "debug" {
 		return zap.DebugLevel

@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
@@ -22,10 +21,10 @@ type VaultConfigParams struct {
 func GetVaultProgramParams() (*ProgramParams, error) {
 
 	vaultconfigparams := VaultConfigParams{
-		LogLevel:                 "DEBUG",
-		StorageConsulAddress:     settings.GetSettings().LeaderServerIP + ":8500",
+		LogLevel:                 sets.UppercaseLogLevel(),
+		StorageConsulAddress:     sets.LeaderServerIP + ":" + sets.ConsulPort,
 		StorageConsulPath:        "vault/",
-		TcpAddress:               utils.IP() + ":8200",
+		TcpAddress:               utils.IP() + ":" + sets.VaultPort,
 		TcpTlsDisable:            1,
 		TelemetryStatsdAddress:   utils.IP() + ":8125",
 		TelemetryDisableHostname: true,

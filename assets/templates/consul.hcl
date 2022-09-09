@@ -44,3 +44,21 @@ service {
   ]
 
 }
+
+
+service {
+  name = "webapi"
+  id   = "webapi"
+  port = {{.ApiPort}}
+  tags = ["primary"]
+
+  checks = [
+    {
+        id = "gitea-healthcheck"
+        name = "Gitea Healthcheck"
+        http = "http://{{.ApiHost}}:{{.ApiPort}}/api/v1/healthz"
+        interval = "10s"
+    }
+  ]
+
+}

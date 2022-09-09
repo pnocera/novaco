@@ -19,9 +19,16 @@ func Serve() {
 
 	router := gin.Default()
 
-	v1 := router.Group("/v1")
+	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/webhook", managehook)
+
+		v1.GET("/healthz", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"message": "ok",
+			})
+		})
+
 	}
 
 	router.Run(sets.BindIPs + ":" + sets.APIPort)
@@ -47,7 +54,7 @@ func managehook(c *gin.Context) {
 		return
 	}
 
-	client.SetBasicAuth("admin", "admin")
+	client.SetBasicAuth("gitea_admin", "gitea_admin")
 
 	repos, resp, err := client.SearchRepos(gitea.SearchRepoOptions{
 		Keyword: webhookBody.Repository.Name,

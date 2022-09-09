@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
@@ -19,7 +18,7 @@ type NomadConfigParams struct {
 func GetNomadProgramParams() (*ProgramParams, error) {
 
 	nomadconfigparams := NomadConfigParams{
-		LogLevel:        settings.GetSettings().LogLevel,
+		LogLevel:        sets.UppercaseLogLevel(),
 		DataDir:         utils.DataPath("nomad"),
 		BootstrapExpect: 1,
 		AdvertiseAddr:   utils.IP(),

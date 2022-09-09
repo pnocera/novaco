@@ -24,6 +24,10 @@ addresses {
     http = "192.168.1.145 127.0.0.1"
 }
 
+ports {
+    http = 8500
+}
+
 service {
   name = "gitea"
   id   = "gitea"

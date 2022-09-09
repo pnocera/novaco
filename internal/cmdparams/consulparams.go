@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
 
@@ -22,6 +21,8 @@ type ConsulConfigParams struct {
 	ConsulPort     string
 	GitPort        string
 	GitHost        string
+	ApiPort        string
+	ApiHost        string
 }
 
 // GetConsulProgramParams returns the program params for consul
@@ -30,7 +31,7 @@ func GetConsulProgramParams() (*ProgramParams, error) {
 	ip := utils.IP()
 
 	consulconfigparams := ConsulConfigParams{
-		LogLevel:       settings.GetSettings().LogLevel,
+		LogLevel:       sets.UppercaseLogLevel(),
 		DataDir:        utils.DataPath("consul"),
 		DataCenter:     "dc1",
 		ClientAddr:     ip,
@@ -43,6 +44,8 @@ func GetConsulProgramParams() (*ProgramParams, error) {
 		ConsulPort:     sets.ConsulPort,
 		GitPort:        sets.GitPort,
 		GitHost:        ip,
+		ApiPort:        sets.APIPort,
+		ApiHost:        ip,
 	}
 
 	configtemplate := utils.TemplatePath("consul.hcl")
