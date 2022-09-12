@@ -12,7 +12,9 @@ import (
 	"github.com/pnocera/novaco/internal/utils"
 )
 
-var logger = utils.NewKLogger("newprogram")
+var (
+	sets = settings.GetSettings()
+)
 
 type newprogram struct {
 	ovr *cmd.Overseer
@@ -40,47 +42,47 @@ func (p newprogram) run() error {
 
 	err := cmdparams.RenderGitConfigIfNotExist()
 	if err != nil {
-		logger.Error("Error rendering git config %v", err)
+		sets.Logger.Error("Error rendering git config %v", err)
 		return err
 	}
 
 	gitparams, err := cmdparams.GetGitParams()
 	if err != nil {
-		logger.Error("Error getting git params %v", err)
+		sets.Logger.Error("Error getting git params %v", err)
 		return err
 	}
 
 	csiproxyparams, err := cmdparams.GetProxyParams()
 	if err != nil {
-		logger.Error("Error getting csi-proxy params %v", err)
+		sets.Logger.Error("Error getting csi-proxy params %v", err)
 		return err
 	}
 
 	nomadparams, err := cmdparams.GetNomadProgramParams()
 	if err != nil {
-		logger.Error("Error getting nomad params %v", err)
+		sets.Logger.Error("Error getting nomad params %v", err)
 		return err
 	}
 
 	consulparams, err := cmdparams.GetConsulProgramParams()
 	if err != nil {
-		logger.Error("Error getting consul params %v", err)
+		sets.Logger.Error("Error getting consul params %v", err)
 		return err
 	}
 
 	vaultparams, err := cmdparams.GetVaultProgramParams()
 	if err != nil {
-		logger.Error("Error getting vault params %v", err)
+		sets.Logger.Error("Error getting vault params %v", err)
 		return err
 	}
-	runtypes := strings.Split(settings.GetSettings().Runtypes, ",")
+	runtypes := strings.Split(sets.Runtypes, ",")
 	if utils.StringsContains(runtypes, "server") {
 		progparams = append(progparams, *gitparams, *csiproxyparams, *nomadparams, *consulparams, *vaultparams)
 	}
 
 	err = p.ExecAndWait(progparams)
 	if err != nil {
-		logger.Error("Error executing programs %v", err)
+		sets.Logger.Error("Error executing programs %v", err)
 	}
 
 	return err
@@ -90,7 +92,7 @@ func (p newprogram) run() error {
 func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
 
 	cmd.SetupLogBuilder(func(name string) cmd.Logger {
-		return utils.NewKLogger(name)
+		return settings.NewKLogger(name)
 
 	})
 

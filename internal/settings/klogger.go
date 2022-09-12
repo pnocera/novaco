@@ -1,11 +1,10 @@
-package utils
+package settings
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/pnocera/novaco/internal/settings"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -20,7 +19,7 @@ type KLogger struct {
 func NewKLogger(name string) *KLogger {
 	var err error
 	id := strings.ReplaceAll(name, ":", "_")
-	logpath := settings.GetSettings().LogPath
+	logpath := instance.LogPath
 	var outpath string = ""
 
 	if logpath != "none" && logpath != "" {
@@ -67,7 +66,7 @@ func (l *KLogger) Error(msg string, v ...interface{}) {
 
 func logInit(f *lumberjack.Logger) *zap.SugaredLogger {
 
-	level := settings.GetSettings().GetZapLevel()
+	level := instance.GetZapLevel()
 
 	pe := zap.NewProductionEncoderConfig()
 

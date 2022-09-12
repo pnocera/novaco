@@ -8,8 +8,11 @@ import (
 	"path/filepath"
 	"time"
 
+	cmd "github.com/ShinyTrinkets/overseer"
 	"github.com/pnocera/novaco/internal/settings"
 )
+
+var sets = settings.GetSettings()
 
 // Create self-signed certificate for Git TLS
 func CreateGitSelfSignedKeyCert() (string, string, error) {
@@ -34,6 +37,33 @@ func CreateGitSelfSignedKeyCert() (string, string, error) {
 
 }
 
+func WatchStatus(statusFeed chan *cmd.ProcessJSON) {
+
+	go func() {
+		for state := range statusFeed {
+			if state.ID == "gitea" && state.State == "running" {
+				// do relevant git initialization here
+				gitadd := sets.GetGitAddress()
+				err := WaitForUrl(gitadd)
+
+				if err != nil {
+					sets.Logger.Error("Error waiting for git url: %v", err)
+				} else {
+					err = WaitForUrl(sets.GetConsulAddress())
+					if err != nil {
+						sets.Logger.Error("Error waiting for consul url: %v", err)
+					} else {
+						err = InitGitea()
+						if err != nil {
+							sets.Logger.Error("Error initializing gitea: %v", err)
+						}
+					}
+				}
+			}
+		}
+	}()
+}
+
 // wait for url to return a 200
 func WaitForUrl(url string) error {
 	for {
@@ -48,10 +78,10 @@ func WaitForUrl(url string) error {
 	}
 }
 
-//initalize gitea
+// initalize gitea
 func InitGitea() error {
 
-	logger.Info("Initializing Gitea")
+	sets.Logger.Info("Initializing Gitea")
 
 	giteaexe := Join(BinPath("gitea"), "gitea.exe")
 
@@ -63,8 +93,13 @@ func InitGitea() error {
 			"--email", "gitea_admin@example.com", "must-change-password",
 			"false", "-c", gitconfig})
 
+	err2 := CreateGithook()
 	if err1 != nil {
 		return err1
+	}
+
+	if err2 != nil {
+		return err2
 	}
 
 	return nil
@@ -76,7 +111,7 @@ func ExecAndWait(exe string, params []string) error {
 	cmd := exec.Command(exe, params...)
 	cmd.Dir = filepath.Dir(exe)
 
-	outfile, err := os.Create(Join(settings.GetSettings().LogPath, "init.log"))
+	outfile, err := os.Create(Join(sets.LogPath, "init.log"))
 	if err != nil {
 		return err
 	}

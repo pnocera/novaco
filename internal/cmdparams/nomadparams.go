@@ -21,7 +21,7 @@ func GetNomadProgramParams() (*ProgramParams, error) {
 		LogLevel:        sets.UppercaseLogLevel(),
 		DataDir:         utils.DataPath("nomad"),
 		BootstrapExpect: 1,
-		AdvertiseAddr:   utils.IP(),
+		AdvertiseAddr:   sets.IP(),
 		BindAddr:        "0.0.0.0",
 	}
 

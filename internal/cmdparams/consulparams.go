@@ -28,7 +28,7 @@ type ConsulConfigParams struct {
 // GetConsulProgramParams returns the program params for consul
 func GetConsulProgramParams() (*ProgramParams, error) {
 
-	ip := utils.IP()
+	ip := sets.IP()
 
 	consulconfigparams := ConsulConfigParams{
 		LogLevel:       sets.UppercaseLogLevel(),

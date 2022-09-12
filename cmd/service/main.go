@@ -7,23 +7,24 @@ import (
 
 	"github.com/pnocera/novaco/internal/service"
 	"github.com/pnocera/novaco/internal/settings"
-	"github.com/pnocera/novaco/internal/utils"
 	"github.com/pnocera/novaco/internal/web"
 )
 
+var sets = settings.GetSettings()
+
 func init() {
-	settings := settings.GetSettings()
-	regStringVar(&settings.DataPath, "data_dir", utils.DataPathDefault(), "data dir")
-	regStringVar(&settings.LogPath, "logs_dir", utils.LogPathDefault(), "log dir")
-	regStringVar(&settings.Runtypes, "run_types", "server,client", "things to run")
-	regStringVar(&settings.LeaderServerIP, "leader_ip", utils.IP(), "leader IP")
-	regStringVar(&settings.BindIPs, "bind_ips", utils.IP(), "Bind IP")
-	regStringVar(&settings.LogLevel, "log_level", "DEBUG", "Log level")
-	regStringVar(&settings.VaultPort, "vault_port", "8200", "Vault port")
-	regStringVar(&settings.ConsulPort, "consul_port", "8500", "Consul port")
-	regStringVar(&settings.NomadPort, "nomad_port", "4646", "Nomad port")
-	regStringVar(&settings.GitPort, "git_port", "8888", "Git port")
-	regStringVar(&settings.APIPort, "api_port", "7788", "API port")
+
+	regStringVar(&sets.DataPath, "data_dir", sets.DataPathDefault(), "data dir")
+	regStringVar(&sets.LogPath, "logs_dir", sets.LogPathDefault(), "log dir")
+	regStringVar(&sets.Runtypes, "run_types", "server,client", "things to run")
+	regStringVar(&sets.LeaderServerIP, "leader_ip", sets.IP(), "leader IP")
+	regStringVar(&sets.BindIPs, "bind_ips", sets.IP(), "Bind IP")
+	regStringVar(&sets.LogLevel, "log_level", "DEBUG", "Log level")
+	regStringVar(&sets.VaultPort, "vault_port", "8200", "Vault port")
+	regStringVar(&sets.ConsulPort, "consul_port", "8500", "Consul port")
+	regStringVar(&sets.NomadPort, "nomad_port", "4646", "Nomad port")
+	regStringVar(&sets.GitPort, "git_port", "8888", "Git port")
+	regStringVar(&sets.APIPort, "api_port", "7788", "API port")
 }
 
 func main() {
@@ -40,6 +41,8 @@ func main() {
 			fmt.Printf("Error creating data path: %v", err)
 		}
 	}
+
+	sets.Logger = settings.NewKLogger("main")
 
 	go web.Serve()
 	_ = service.StartNew()

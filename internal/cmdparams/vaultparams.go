@@ -24,9 +24,9 @@ func GetVaultProgramParams() (*ProgramParams, error) {
 		LogLevel:                 sets.UppercaseLogLevel(),
 		StorageConsulAddress:     sets.LeaderServerIP + ":" + sets.ConsulPort,
 		StorageConsulPath:        "vault/",
-		TcpAddress:               utils.IP() + ":" + sets.VaultPort,
+		TcpAddress:               sets.IP() + ":" + sets.VaultPort,
 		TcpTlsDisable:            1,
-		TelemetryStatsdAddress:   utils.IP() + ":8125",
+		TelemetryStatsdAddress:   sets.IP() + ":8125",
 		TelemetryDisableHostname: true,
 		UiEnabled:                true,
 	}

@@ -3,10 +3,10 @@ package service
 import (
 	"github.com/kardianos/service"
 	"github.com/pnocera/novaco/internal/newprogram"
-	"github.com/pnocera/novaco/internal/utils"
+	"github.com/pnocera/novaco/internal/settings"
 )
 
-var logger = utils.NewKLogger("service")
+var sets = settings.GetSettings()
 
 func StartNew() error {
 
@@ -19,15 +19,15 @@ func StartNew() error {
 	prg := newprogram.NewProgram()
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		logger.Error("Error creating service: %v", err)
+		sets.Logger.Error("Error creating service: %v", err)
 		return err
 	}
 
 	err = s.Run()
 
 	if err != nil {
-		logger.Error("Error running service: %v", err)
+		sets.Logger.Error("Error running service: %v", err)
 	}
-	logger.Info("Service stopped")
+	sets.Logger.Info("Service stopped")
 	return err
 }

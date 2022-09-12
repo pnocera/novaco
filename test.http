@@ -1,0 +1,7 @@
+POST http://192.168.1.145:7788/api/v1/webhook
+Headers:    Content-Type: application/json
+
+{
+"name": "test",
+"url": "http://"
+}

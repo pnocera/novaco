@@ -18,11 +18,11 @@ func RenderGitConfigIfNotExist() error {
 	gitconfigparams := config.GitConfig{
 		LogLevel:     sets.FirstUppercaseLogLevel(),
 		LogMode:      "console",
-		HostIP:       utils.IP(),
+		HostIP:       sets.IP(),
 		Port:         sets.GitPort,
 		GitPath:      utils.Join(utils.BinPath("gitea"), "git.exe"),
 		DatabasePath: utils.Join(datapath, "gitea.db"),
-		Domain:       utils.IP(),
+		Domain:       sets.IP(),
 		RunMode:      "prod",
 		RunUser:      "COMPUTERNAME$",
 		RepoPath:     utils.Join(datapath, "repo"),
