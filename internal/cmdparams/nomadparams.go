@@ -2,7 +2,6 @@ package cmdparams
 
 import (
 	"path/filepath"
-	"runtime"
 
 	"github.com/pnocera/novaco/internal/utils"
 )
@@ -34,7 +33,7 @@ func GetNomadProgramParams() (*ProgramParams, error) {
 		return nil, err
 	}
 
-	exefile := utils.Join(utils.BinPath("nomad"), "nomad_"+runtime.GOARCH+".exe") //  "nomad.exe") //
+	exefile := utils.Join(utils.BinPath("nomad"), "nomad.exe")
 
 	additionalparams := []string{
 		"agent",

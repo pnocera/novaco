@@ -2,7 +2,6 @@ package cmdparams
 
 import (
 	"path/filepath"
-	"runtime"
 
 	"github.com/pnocera/novaco/internal/utils"
 )
@@ -40,7 +39,7 @@ func GetVaultProgramParams() (*ProgramParams, error) {
 		return nil, err
 	}
 
-	exefile := utils.Join(utils.BinPath("vault"), "vault_"+runtime.GOARCH+".exe")
+	exefile := utils.Join(utils.BinPath("vault"), "vault.exe")
 
 	additionalparams := []string{
 		"server",

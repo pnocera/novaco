@@ -1,7 +1,6 @@
-package utils
+package gitops
 
 import (
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -10,6 +9,8 @@ import (
 
 	cmd "github.com/ShinyTrinkets/overseer"
 	"github.com/pnocera/novaco/internal/settings"
+	"github.com/pnocera/novaco/internal/utils"
+	"github.com/sethvargo/go-password/password"
 )
 
 var sets = settings.GetSettings()
@@ -17,18 +18,18 @@ var sets = settings.GetSettings()
 // Create self-signed certificate for Git TLS
 func CreateGitSelfSignedKeyCert() (string, string, error) {
 
-	key, cert, err := MakeCert()
+	key, cert, err := utils.MakeCert()
 
 	if err != nil {
 		return "", "", err
 	}
-	outkey := Join(DataPath("git"), "localhost.key")
-	outcert := Join(DataPath("git"), "localhost.crt")
-	err = ioutil.WriteFile(outkey, []byte(key), 0644)
+	outkey := utils.Join(utils.DataPath("git"), "localhost.key")
+	outcert := utils.Join(utils.DataPath("git"), "localhost.crt")
+	err = os.WriteFile(outkey, []byte(key), 0644)
 	if err != nil {
 		return "", "", err
 	}
-	err = ioutil.WriteFile(outcert, []byte(cert), 0644)
+	err = os.WriteFile(outcert, []byte(cert), 0644)
 	if err != nil {
 		return "", "", err
 	}
@@ -47,15 +48,22 @@ func WatchStatus(statusFeed chan *cmd.ProcessJSON) {
 				err := WaitForUrl(gitadd)
 
 				if err != nil {
-					sets.Logger.Error("Error waiting for git url: %v", err)
+					sets.Logger.Error("Error waiting for gitea", err)
+				}
+
+				consuladd := sets.GetConsulAddress()
+				err = WaitForUrl(consuladd)
+
+				if err != nil {
+					sets.Logger.Error("Error waiting for consul url", err)
 				} else {
 					err = WaitForUrl(sets.GetConsulAddress())
 					if err != nil {
-						sets.Logger.Error("Error waiting for consul url: %v", err)
+						sets.Logger.Error("Error waiting for consul url", err)
 					} else {
 						err = InitGitea()
 						if err != nil {
-							sets.Logger.Error("Error initializing gitea: %v", err)
+							sets.Logger.Error("Error initializing gitea", err)
 						}
 					}
 				}
@@ -83,26 +91,29 @@ func InitGitea() error {
 
 	sets.Logger.Info("Initializing Gitea")
 
-	giteaexe := Join(BinPath("gitea"), "gitea.exe")
+	res, err := password.Generate(12, 4, 8, false, false)
+	if err != nil {
+		sets.Logger.Error("error generating password for gitea", err)
+		return err
+	}
+
+	giteaexe := utils.Join(utils.BinPath("gitea"), "gitea.exe")
 
 	// create gitea admin user
-	gitconfig := Join(ConfigPath("gitea"), "gitea.ini")
-	err1 := ExecAndWait(giteaexe,
+	gitconfig := utils.Join(utils.ConfigPath("gitea"), "gitea.ini")
+	err = ExecAndWait(giteaexe,
 		[]string{"admin", "user", "create", "--admin",
-			"--username", "gitea_admin", "--password", "gitea_admin",
+			"--username", "gitea_admin", "--password", res,
 			"--email", "gitea_admin@example.com", "must-change-password",
 			"false", "-c", gitconfig})
 
-	err2 := CreateGithook()
-	if err1 != nil {
-		return err1
+	if err == nil {
+
+		err = CreateGithook(res)
+
 	}
 
-	if err2 != nil {
-		return err2
-	}
-
-	return nil
+	return err
 
 }
 
@@ -111,7 +122,7 @@ func ExecAndWait(exe string, params []string) error {
 	cmd := exec.Command(exe, params...)
 	cmd.Dir = filepath.Dir(exe)
 
-	outfile, err := os.Create(Join(sets.LogPath, "init.log"))
+	outfile, err := os.Create(utils.Join(sets.LogPath, "init.log"))
 	if err != nil {
 		return err
 	}

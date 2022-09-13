@@ -16,7 +16,7 @@ func DataPath(app string) string {
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(appdata, os.ModePerm)
 		if err != nil {
-			sets.Logger.Error("Error creating data path: %v", err)
+			sets.Logger.Error("Error creating data path", err)
 		}
 	}
 	return appdata
@@ -29,7 +29,7 @@ func LogPath(app string) string {
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(applog, os.ModePerm)
 		if err != nil {
-			sets.Logger.Error("Error creating data path: %v", err)
+			sets.Logger.Error("Error creating data path", err)
 		}
 	}
 	return applog
@@ -45,7 +45,7 @@ func ConfigPath(app string) string {
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(cfg, os.ModePerm)
 		if err != nil {
-			sets.Logger.Error("Error creating config path: %v", err)
+			sets.Logger.Error("Error creating config path", err)
 		}
 	}
 	return cfg

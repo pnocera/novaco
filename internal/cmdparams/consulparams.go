@@ -2,7 +2,6 @@ package cmdparams
 
 import (
 	"path/filepath"
-	"runtime"
 
 	"github.com/pnocera/novaco/internal/utils"
 )
@@ -57,7 +56,7 @@ func GetConsulProgramParams() (*ProgramParams, error) {
 		return nil, err
 	}
 
-	exefile := utils.Join(utils.BinPath("consul"), "consul_"+runtime.GOARCH+".exe")
+	exefile := utils.Join(utils.BinPath("consul"), "consul.exe")
 
 	additionalparams := []string{
 		"agent",

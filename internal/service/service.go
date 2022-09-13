@@ -19,14 +19,14 @@ func StartNew() error {
 	prg := newprogram.NewProgram()
 	s, err := service.New(prg, svcConfig)
 	if err != nil {
-		sets.Logger.Error("Error creating service: %v", err)
+		sets.Logger.Error("Error creating service", err)
 		return err
 	}
 
 	err = s.Run()
 
 	if err != nil {
-		sets.Logger.Error("Error running service: %v", err)
+		sets.Logger.Error("Error running service", err)
 	}
 	sets.Logger.Info("Service stopped")
 	return err

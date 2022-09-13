@@ -8,6 +8,7 @@ import (
 
 	"github.com/kardianos/service"
 	"github.com/pnocera/novaco/internal/cmdparams"
+	"github.com/pnocera/novaco/internal/gitops"
 	"github.com/pnocera/novaco/internal/settings"
 	"github.com/pnocera/novaco/internal/utils"
 )
@@ -108,7 +109,7 @@ func (p newprogram) ExecAndWait(commands []cmdparams.ProgramParams) error {
 	statusFeed := make(chan *cmd.ProcessJSON)
 	p.ovr.WatchState(statusFeed)
 
-	utils.WatchStatus(statusFeed)
+	gitops.WatchStatus(statusFeed)
 
 	p.ovr.SuperviseAll()
 

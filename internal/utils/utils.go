@@ -4,7 +4,11 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/pnocera/novaco/internal/settings"
 )
+
+var sets = settings.GetSettings()
 
 func Render(input string, output string, params interface{}) error {
 	tmpl, err := template.ParseFiles(input)
